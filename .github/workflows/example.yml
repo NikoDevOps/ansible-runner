@@ -1,0 +1,17 @@
+name: CI - Ansible Playbook
+on:
+  workflow_dispatch:
+
+jobs:
+  playbook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Ansible playbook via Docker Action
+        uses: ./
+        with:
+          playbook: playbooks/site.yml
+          inventory: inventories/hosts.yml
+          ssh_key_base64: ${{ secrets.SSH_KEY_BASE64 }}
+          ssh_user: ubuntu
+          extra_args: "-e env=staging"
