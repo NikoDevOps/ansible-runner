@@ -30,6 +30,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare image tags (lowercase)
+        id: prepare-tags
+        run: |
+          set -euo pipefail
+          BASE="ghcr.io/${GITHUB_REPOSITORY}"
+          BASE_LOWER=$(echo "$BASE" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_BASE=$BASE_LOWER" >> $GITHUB_ENV
+          SHA_TAG=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          echo "IMAGE_SHA_TAG=$BASE_LOWER:$SHA_TAG" >> $GITHUB_ENV
+          REFNAME=${GITHUB_REF#refs/heads/}
+          REFNAME=${REFNAME#refs/tags/}
+          REF_LOWER=$(echo "$REFNAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9._-]/-/g')
+          if [ -n "$REF_LOWER" ]; then
+            echo "IMAGE_REF_TAG=$BASE_LOWER:$REF_LOWER" >> $GITHUB_ENV
+          else
+            echo "IMAGE_REF_TAG=$BASE_LOWER:latest" >> $GITHUB_ENV
+          fi
+
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
@@ -37,6 +55,6 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
-            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            ${{ env.IMAGE_BASE }}:latest
+            ${{ env.IMAGE_SHA_TAG }}
+            ${{ env.IMAGE_REF_TAG }}
