@@ -82,16 +82,47 @@ if [[ "$PLAYBOOK" != /* ]]; then
   PLAYBOOK="$BASE_WORKDIR/$PLAYBOOK"
 fi
 
-# verify playbook exists
+# verify playbook exists; if not, try common filename variants (.yml/.yaml)
 if [ ! -f "$PLAYBOOK" ]; then
-  echo "Error: playbook file not found: $PLAYBOOK"
-  echo "Current working dir: $(pwd)"
-  echo "Workspace dir: $BASE_WORKDIR"
-  echo "Workspace top-level files:" 
-  ls -la "$BASE_WORKDIR" || true
-  echo "Workspace tree (depth=2):"
-  find "$BASE_WORKDIR" -maxdepth 2 -print || true
-  exit 4
+  # try swapping extensions if present
+  PLAYBOOK_TRIED=0
+  if [[ "$PLAYBOOK" == *.yml ]]; then
+    ALT=${PLAYBOOK%.yml}.yaml
+    if [ -f "$ALT" ]; then
+      echo "Note: playbook not found at $PLAYBOOK, using $ALT instead"
+      PLAYBOOK="$ALT"
+      PLAYBOOK_TRIED=1
+    fi
+  elif [[ "$PLAYBOOK" == *.yaml ]]; then
+    ALT=${PLAYBOOK%.yaml}.yml
+    if [ -f "$ALT" ]; then
+      echo "Note: playbook not found at $PLAYBOOK, using $ALT instead"
+      PLAYBOOK="$ALT"
+      PLAYBOOK_TRIED=1
+    fi
+  else
+    # no extension; try .yml and .yaml
+    if [ -f "$PLAYBOOK.yml" ]; then
+      echo "Note: playbook not found at $PLAYBOOK, using $PLAYBOOK.yml instead"
+      PLAYBOOK="$PLAYBOOK.yml"
+      PLAYBOOK_TRIED=1
+    elif [ -f "$PLAYBOOK.yaml" ]; then
+      echo "Note: playbook not found at $PLAYBOOK, using $PLAYBOOK.yaml instead"
+      PLAYBOOK="$PLAYBOOK.yaml"
+      PLAYBOOK_TRIED=1
+    fi
+  fi
+
+  if [ "$PLAYBOOK_TRIED" -eq 0 ] || [ ! -f "$PLAYBOOK" ]; then
+    echo "Error: playbook file not found: $PLAYBOOK"
+    echo "Current working dir: $(pwd)"
+    echo "Workspace dir: $BASE_WORKDIR"
+    echo "Workspace top-level files:"
+    ls -la "$BASE_WORKDIR" || true
+    echo "Workspace tree (depth=2):"
+    find "$BASE_WORKDIR" -maxdepth 2 -print || true
+    exit 4
+  fi
 fi
 
 CMD+=( "$PLAYBOOK" )
