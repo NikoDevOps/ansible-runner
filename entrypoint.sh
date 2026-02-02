@@ -35,7 +35,6 @@ if [ -n "$ANSIBLE_VERSION" ]; then
   pip install --no-cache-dir "ansible-core==$ANSIBLE_VERSION"
 fi
 
-cd /work || exit 1
 
 # Fetch playbook repo if provided
 if [ -n "$PLAYBOOK_URL" ]; then
@@ -53,7 +52,7 @@ fi
 # Fetch inventory if provided as URL
 if [ -n "$INVENTORY_URL" ]; then
   echo "Fetching inventory from $INVENTORY_URL"
-  rm -rf /work/inventory
+  rm -rf "$BASE_WORKDIR/inventory"
   if [[ "$INVENTORY_URL" == git@* || "$INVENTORY_URL" == http* ]]; then
     git clone --depth 1 "$INVENTORY_URL" "$BASE_WORKDIR/inventory"
     INVENTORY="inventory/$INVENTORY"
