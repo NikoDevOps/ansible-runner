@@ -67,11 +67,28 @@ fi
 CMD=(ansible-playbook)
 
 if [ -n "$INVENTORY" ]; then
+  # If inventory is a relative path, resolve against workspace
+  if [[ "$INVENTORY" != /* ]]; then
+    INVENTORY="$BASE_WORKDIR/$INVENTORY"
+  fi
   CMD+=( -i "$INVENTORY" )
 fi
 
 if [ -n "$SSH_USER" ]; then
   CMD+=( -u "$SSH_USER" )
+fi
+
+# Resolve playbook path if relative
+if [[ "$PLAYBOOK" != /* ]]; then
+  PLAYBOOK="$BASE_WORKDIR/$PLAYBOOK"
+fi
+
+# verify playbook exists
+if [ ! -f "$PLAYBOOK" ]; then
+  echo "Error: playbook file not found: $PLAYBOOK"
+  echo "Current working dir: $(pwd)"
+  echo "Workspace dir: $BASE_WORKDIR"
+  exit 4
 fi
 
 CMD+=( "$PLAYBOOK" )
