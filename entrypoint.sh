@@ -15,6 +15,10 @@ ANSIBLE_VERSION="$9"
 mkdir -p /root/.ssh
 chmod 700 /root/.ssh
 
+# Use the GitHub workspace if available (the runner mounts the repo at $GITHUB_WORKSPACE)
+BASE_WORKDIR="${GITHUB_WORKSPACE:-/work}"
+cd "$BASE_WORKDIR" || exit 1
+
 if [ -n "$SSH_KEY_BASE64" ]; then
   echo "$SSH_KEY_BASE64" | base64 --decode > /root/.ssh/id_rsa
   chmod 600 /root/.ssh/id_rsa
@@ -37,9 +41,9 @@ cd /work || exit 1
 if [ -n "$PLAYBOOK_URL" ]; then
   echo "Fetching playbook from $PLAYBOOK_URL"
   if [[ "$PLAYBOOK_URL" == git@* || "$PLAYBOOK_URL" == http* ]]; then
-    rm -rf /work/playbook_src
-    git clone --depth 1 "$PLAYBOOK_URL" /work/playbook_src
-    PLAYBOOK="/work/playbook_src/$PLAYBOOK"
+    rm -rf "$BASE_WORKDIR/playbook_src"
+    git clone --depth 1 "$PLAYBOOK_URL" "$BASE_WORKDIR/playbook_src"
+    PLAYBOOK="playbook_src/$PLAYBOOK"
   else
     echo "Unsupported playbook_url format: $PLAYBOOK_URL"
     exit 2
@@ -51,8 +55,8 @@ if [ -n "$INVENTORY_URL" ]; then
   echo "Fetching inventory from $INVENTORY_URL"
   rm -rf /work/inventory
   if [[ "$INVENTORY_URL" == git@* || "$INVENTORY_URL" == http* ]]; then
-    git clone --depth 1 "$INVENTORY_URL" /work/inventory
-    INVENTORY="/work/inventory/$INVENTORY"
+    git clone --depth 1 "$INVENTORY_URL" "$BASE_WORKDIR/inventory"
+    INVENTORY="inventory/$INVENTORY"
   else
     echo "Unsupported inventory_url format: $INVENTORY_URL"
     exit 3
