@@ -87,6 +87,10 @@ if [ ! -f "$PLAYBOOK" ]; then
   echo "Error: playbook file not found: $PLAYBOOK"
   echo "Current working dir: $(pwd)"
   echo "Workspace dir: $BASE_WORKDIR"
+  echo "Workspace top-level files:" 
+  ls -la "$BASE_WORKDIR" || true
+  echo "Workspace tree (depth=2):"
+  find "$BASE_WORKDIR" -maxdepth 2 -print || true
   exit 4
 fi
 
